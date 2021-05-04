@@ -13,6 +13,7 @@ type LogResponse struct {
 }
 
 type Log struct {
+	ID      string `json:"id"`
 	Content struct {
 		Service    string        `json:"service"`
 		Tags       []string      `json:"tags"`
@@ -24,12 +25,12 @@ type Log struct {
 }
 
 type LogAttributes struct {
-	Level     string    `json:"level"`
-	Process   string    `json:"process"`
-	Timestamp time.Time `json:"timestamp"`
-	Agent     string    `json:"agent"`
-	Filename  string    `json:"filename"`
-	Linene    float32   `json:"lineno"`
+	Level     string  `json:"level"`
+	Process   string  `json:"process"`
+	Timestamp int64   `json:"timestamp"`
+	Agent     string  `json:"agent"`
+	Filename  string  `json:"filename"`
+	Lineno    float32 `json:"lineno"`
 }
 
 type LogQueryOpts struct {

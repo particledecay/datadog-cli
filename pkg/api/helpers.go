@@ -37,6 +37,7 @@ func MakeRequest(endpoint, method string, body Postable) ([]byte, error) {
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("DD-API-KEY", config.APIKey)
+	req.Header.Add("DD-APPLICATION-KEY", config.AppKey)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
