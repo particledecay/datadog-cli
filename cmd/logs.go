@@ -42,7 +42,7 @@ func logsCmd() *cobra.Command {
 
 				msgSvc := fmt.Sprintf("\x1b[%dm%s\x1b[0m", 33, svc) // yellow
 				msgEnv := fmt.Sprintf("\x1b[%dm%s\x1b[0m", 36, env) // cyan
-				fmt.Printf("%s(%s): %s\n", msgSvc, msgEnv, logObj.Content.Message)
+				fmt.Printf("%s(%s) %s\n", msgSvc, msgEnv, logObj.Content.Message)
 			}
 			return nil
 		},
