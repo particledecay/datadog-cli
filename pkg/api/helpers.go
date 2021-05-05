@@ -16,21 +16,16 @@ type Postable interface {
 }
 
 func MakeRequest(endpoint, method string, body Postable) ([]byte, error) {
-	var postBody []byte
-	var err error
+	method = strings.ToUpper(method)
+	url := fmt.Sprintf("https://api.datadoghq.com/api/v1/%s", endpoint)
+
+	var req *http.Request
 	if body != nil {
-		postBody, err = json.Marshal(body)
-		if err != nil {
-			return nil, err
-		}
-	}
-	req, err := http.NewRequest(
-		strings.ToUpper(method),
-		fmt.Sprintf("https://api.datadoghq.com/api/v1/%s", endpoint),
-		bytes.NewBuffer(postBody),
-	)
-	if err != nil {
-		return nil, err
+		bodyJSON, _ := json.Marshal(body)
+		postBody := bytes.NewBuffer(bodyJSON)
+		req, _ = http.NewRequest(method, url, postBody)
+	} else {
+		req, _ = http.NewRequest(method, url, nil)
 	}
 
 	// add DD headers
@@ -43,13 +38,14 @@ func MakeRequest(endpoint, method string, body Postable) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
-	respBytes, err := ioutil.ReadAll(resp.Body)
+	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	return respBytes, nil
+	return respBody, nil
 }
 
 func MakeGetRequest(endpoint string) ([]byte, error) {

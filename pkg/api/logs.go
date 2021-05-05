@@ -1,9 +1,9 @@
 package api
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -22,6 +22,7 @@ type Log struct {
 		Attributes LogAttributes `json:"attributes"`
 		Message    string        `json:"message"`
 	} `json:"content"`
+	Tags map[string]string
 }
 
 type LogAttributes struct {
@@ -34,11 +35,13 @@ type LogAttributes struct {
 }
 
 type LogQueryOpts struct {
-	Limit int
-	Query string
-	Sort  string
-	From  string
-	To    string
+	Limit int    `json:"limit"`
+	Query string `json:"query"`
+	Sort  string `json:"sort"`
+	Time  struct {
+		From string `json:"from"`
+		To   string `json:"to"`
+	} `json:"time"`
 }
 
 func (o *LogQueryOpts) defaults() {
@@ -49,11 +52,40 @@ func (o *LogQueryOpts) defaults() {
 		o.Sort = "desc"
 	}
 	now := time.Now()
-	if o.From == "" {
-		o.From = fmt.Sprint(now.UnixNano() / int64(time.Millisecond))
+	if o.Time.From == "" {
+		o.Time.From = fmt.Sprint(now.UnixNano() / int64(time.Millisecond))
 	}
-	if o.To == "" {
-		o.To = fmt.Sprint(now.Add(time.Minute*30).UnixNano() / int64(time.Millisecond))
+	if o.Time.To == "" {
+		o.Time.To = fmt.Sprint(now.Add(time.Minute*30).UnixNano() / int64(time.Millisecond))
+	}
+}
+
+func (l *Log) GetTag(name string) (string, error) {
+	if l.Tags != nil {
+		if tag, ok := l.Tags[strings.ToLower(name)]; !ok {
+			return "", fmt.Errorf("tag '%s' not found", name)
+		} else {
+			return tag, nil
+		}
+	}
+
+	l.loadAllTags()
+	return l.GetTag(name)
+}
+
+func (l *Log) loadAllTags() {
+	l.Tags = make(map[string]string)
+	for _, tag := range l.Content.Tags {
+		parts := strings.Split(tag, ":")
+		key := strings.ToLower(parts[0])
+		if key != "" {
+			newVal := strings.Join(parts[1:], ":")
+			oldVal, ok := l.Tags[key]   // duplicate tags?
+			if ok && oldVal != newVal { // ... but no duplicate values
+				newVal = strings.Join([]string{oldVal, newVal}, ", ")
+			}
+			l.Tags[key] = newVal
+		}
 	}
 }
 
@@ -65,10 +97,7 @@ func Logs(opts *LogQueryOpts) ([]Log, error) {
 	}
 
 	var response LogResponse
-	err = json.NewDecoder(bytes.NewBuffer(body)).Decode(&response)
-	if err != nil {
-		return nil, err
-	}
+	err = json.Unmarshal(body, &response)
 
 	return response.Logs, nil
 }

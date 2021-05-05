@@ -1,7 +1,6 @@
 package api
 
 import (
-	"bytes"
 	"encoding/json"
 )
 
@@ -16,7 +15,7 @@ func Validate() (bool, error) {
 	}
 
 	var auth AuthCheck
-	err = json.NewDecoder(bytes.NewBuffer(body)).Decode(&auth)
+	err = json.Unmarshal(body, &auth)
 	if err != nil {
 		return false, err
 	}
